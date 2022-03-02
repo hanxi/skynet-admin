@@ -11,7 +11,7 @@ local app_default_avatar = config.get("app_default_avatar")
 
 function M.check_user_password(username, password)
     local dbtbl_user = db.get_dbtbl_user()
-	local data = dbtbl_user:findOne({username = username}, { _id = 0, password = 1, salt = 1 })
+    local data = dbtbl_user:findOne({username = username}, { _id = 0, password = 1, salt = 1 })
     log.debug("check_user_password. username:", username, ", password:", password, ", data:", data)
     if data then
         local encode_password = utils.sha1_encode({username, password, data.salt, app_password_salt})
@@ -43,7 +43,15 @@ function M.add_user(username, password, name, avatar)
     local dbtbl_user = db.get_dbtbl_user()
     local salt = tostring(skynet.time())
     local encode_password = utils.sha1_encode({username, password, salt, app_password_salt})
-	local ok, err, ret = dbtbl_user:safe_insert({username = username, password = encode_password, salt = salt, name = name, avatar = avatar})
+    local now = utils.now()
+    local ok, err, ret = dbtbl_user:safe_insert({
+        username = username,
+        password = encode_password,
+        salt = salt,
+        name = name,
+        avatar = avatar,
+        createtime = now,
+    })
     if ok and ret and ret.n == 1 then
         return true
     end
@@ -82,14 +90,14 @@ end
 
 function M.get_info(username)
     local dbtbl_user = db.get_dbtbl_user()
-	local data = dbtbl_user:findOne({username = username}, { _id = 0, name = 1, avatar = 1 })
+    local data = dbtbl_user:findOne({username = username}, { _id = 0, name = 1, avatar = 1 })
     log.debug("get_info. username:", username, ", data:", data)
     return data
 end
 
 function M.get_users()
     local dbtbl_user = db.get_dbtbl_user()
-	local ret = dbtbl_user:find({}, { _id = 0, name = 1, avatar = 1 })
+    local ret = dbtbl_user:find({}, { _id = 0, name = 1, username = 1, avatar = 1, createtime = 1 })
     local users = {}
     local i = 0
     while ret:hasNext() do

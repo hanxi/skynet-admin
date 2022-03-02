@@ -33,4 +33,8 @@ function M.des_encode(b64text, des_key, padding)
 	return crypt.base64encode(c)
 end
 
+function M.now()
+    return math.floor(skynet.time())
+end
+
 return M

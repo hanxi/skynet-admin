@@ -1,12 +1,13 @@
 local skynet = require "skynet"
 local log = require "log"
 local db = require "app.db"
+local utils = require "app.utils"
 
 local M = {}
 
 function M.get_nodes()
     local dbtbl_cluster = db.get_dbtbl_cluster()
-	local ret = dbtbl_cluster:find({}, { _id = 0 })
+    local ret = dbtbl_cluster:find({}, { _id = 0 })
     local nodes = {}
     local i = 0
     while ret:hasNext() do
@@ -19,7 +20,13 @@ end
 
 function M.add_node(name, addr)
     local dbtbl_cluster = db.get_dbtbl_cluster()
-	local ok, err, ret = dbtbl_cluster:safe_insert({name = name, addr = addr})
+    local now = utils.now()
+    local ok, err, ret = dbtbl_cluster:safe_insert({
+        name = name,
+        addr = addr,
+        createtime = now,
+        updatetime = now,
+    })
     if ok and ret and ret.n == 1 then
         return "OK", "add node success"
     end
@@ -29,9 +36,11 @@ function M.add_node(name, addr)
 end
 
 function M.update_node(name, addr)
+    local now = utils.now()
     local data = {
         ["$set"] = {
             addr = addr,
+            updatetime = now,
         },
     }
     local dbtbl_cluster = db.get_dbtbl_cluster()
