@@ -2,6 +2,7 @@ local skynet = require "skynet"
 local log = require "log"
 local db = require "app.db"
 local utils = require "app.utils"
+local clustermng = require "app.lib.clustermng"
 
 local M = {}
 
@@ -61,5 +62,40 @@ function M.del_node(name)
     log.error("del node failed. name:", name, ", err:", err)
     return "DB_ERROR", "db operate failed"
 end
+
+function M.get_node_detail(name)
+    local data = clustermng.run(name, "list")
+    log.debug("get_node_detail. name:", name, ",data:", data)
+    if data then
+        return "OK", data
+    end
+    return "CLUSTER_ERROR", "cluster call failed"
+end
+
+function M.get_cluster_config()
+    local cluster_config = {
+        __nowaiting = true,
+    }
+    local nodes = M.get_nodes()
+    for _, node in pairs(nodes) do
+        local name = node.name
+        local addr = node.addr
+        cluster_config[name] = addr
+    end
+    return cluster_config
+end
+
+function M.reload()
+    local cluster_config = M.get_cluster_config()
+    clustermng.reload(cluster_config)
+    return "OK", "reload nodes sucess"
+end
+
+skynet.init(function()
+    local cluster_config = M.get_cluster_config()
+    clustermng.init(cluster_config)
+end)
+
+-- TODO: 解决 clustermng 的热更问题？
 
 return M

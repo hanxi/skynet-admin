@@ -45,4 +45,23 @@ router:post("/del", function(c)
     })
 end)
 
+-- 查看节点详情
+router:get("/detail/{name}", function(c)
+    local name = c.params.name
+    local code, data = model_cluster.get_node_detail(name)
+    c:send_json({
+        code = code,
+        data = data,
+    })
+end)
+
+-- 重新连接节点
+router:post("/reload", function(c)
+    local code, msg = model_cluster.reload()
+    c:send_json({
+        code = code,
+        msg = msg,
+    })
+end)
+
 end
