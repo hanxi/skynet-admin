@@ -61,10 +61,11 @@ local function clustermng_service()
         end)
     end
 
+    local debugagent_name = config.get_tbl("app_debugagent_name") or "debugagent"
     -- 给节点远程开启 debugagent 服务
     local function load_debugagent(t, key)
         if key == "address" then
-            local ok, r = pcall(clusterservice.new, t.nodename, "debugagent", debugagent_service)
+            local ok, r = pcall(clusterservice.new, t.nodename, debugagent_name, debugagent_service)
             if ok then
                 t.address = r
                 return t.address
@@ -89,7 +90,7 @@ local function clustermng_service()
                 }
 
                 if nodes[nodename] then
-                    clusterservice.close(nodename, "debugagent")
+                    clusterservice.close(nodename, debugagent_name)
                 end
                 nodes[nodename] = setmetatable(node , mt)
             end
