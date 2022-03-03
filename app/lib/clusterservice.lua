@@ -52,6 +52,9 @@ function service.close(nodename, name)
         if caches[nodename] then
             caches[nodename][name] = nil
         end
+        if not next(caches[nodename]) then
+            caches[nodename] = nil
+        end
         cluster.send(nodename, addr, "EXIT")
         return true
     end
@@ -60,10 +63,11 @@ end
 
 function service.query(nodename, name)
     if (not caches[nodename]) or (not caches[nodename][name]) then
+        local address = cluster.call(nodename, get_provider(nodename), "query", name)
         if not caches[nodename] then
             caches[nodename] = {}
         end
-        caches[nodename][name] = cluster.call(nodename, get_provider(nodename), "query", name)
+        caches[nodename][name] = address
     end
     return caches[nodename][name]
 end
