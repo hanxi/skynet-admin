@@ -32,6 +32,10 @@ local function clustermng_service()
             return ti
         end
 
+        function debugagent.EXIT()
+            skynet.exit()
+        end
+
         function debugagent.stat(ti)
             log.debug("in stat")
             local ret = skynet.call(".launcher", "lua", "STAT", timeout(ti))
