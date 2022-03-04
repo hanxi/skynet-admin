@@ -2,10 +2,7 @@
 
 #####################################################################
 # usage:
-# sh start.sh
+# sh stop.sh
 #####################################################################
 
-. ./.env
-mkdir -p ${WLUA_APP_RUN_DIR}
-mkdir -p ${WLUA_APP_LOG_DIR}
-${WLUA_DIR}/skynet/skynet ${WLUA_DIR}/conf/wlua.conf $PWD
+ps -ef|grep $PWD |grep -v grep
