@@ -2,7 +2,6 @@ return function(router)
 
 local model_user = require "app.model.user"
 local utils = require "app.utils"
-local ipairs = ipairs
 
 router:get("/info", function(c)
     local username = c.token.get('username')

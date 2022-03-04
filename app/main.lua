@@ -1,6 +1,5 @@
 local wlua = require "wlua"
 local config = require "config"
-local log = require "log"
 local token_middleware = require "app.middleware.token"
 local check_login_middleware = require "app.middleware.check_login"
 local router = require "app.router"

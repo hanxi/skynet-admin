@@ -1,7 +1,5 @@
 local skynet = require "skynet"
 local crypt = require "skynet.crypt"
-local config = require "config"
-local crypt = require "skynet.crypt"
 
 local sformat = string.format
 local tconcat = table.concat

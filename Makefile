@@ -3,7 +3,7 @@
 all: check
 
 check:
-	luacheck `find app -name '*.lua' | xargs` --ignore 212/self
+	luacheck `find app -name '*.lua' | xargs` --ignore 212/self --no-max-code-line-length
 
 restart:
 	wlua stop

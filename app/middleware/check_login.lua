@@ -1,4 +1,3 @@
-local util_table = require "util.table"
 local log = require "log"
 local r3 = require "r3"
 

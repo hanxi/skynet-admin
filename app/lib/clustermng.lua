@@ -128,7 +128,6 @@ local function clustermng_service()
         log.error("error in cluster_safe_call. err:", rettbl[2])
     end
 
-    local COMMAND = {}
     function clustermng.run(nodename, command, ...)
         local node = nodes[nodename]
         if not node then
