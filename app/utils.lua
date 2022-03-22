@@ -35,4 +35,14 @@ function M.now()
     return math.floor(skynet.time())
 end
 
+function M.keys(tbl)
+    local arr = {}
+    local i = 0
+    for k,_ in pairs(tbl) do
+        i = i + 1
+        arr[i] = k
+    end
+    return arr
+end
+
 return M

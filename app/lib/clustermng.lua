@@ -7,6 +7,7 @@ local function clustermng_service()
     local clusterservice = require "app.lib.clusterservice"
     local config = require "config"
     local log = require "log"
+    local utils = require "app.utils"
 
     local clustermng = {}
     local nodes = {}
@@ -32,8 +33,13 @@ local function clustermng_service()
             return ti
         end
 
+        -- call from service.close
         function debugagent.EXIT()
             skynet.exit()
+        end
+
+        function debugagent.ping()
+            return "pong"
         end
 
         function debugagent.stat(ti)
@@ -51,6 +57,15 @@ local function clustermng_service()
             return skynet.call(".launcher", "lua", "LIST")
         end
 
+        function debugagent.inject(code, ...)
+            local address = skynet.self()
+            local ok, output = skynet.call(address, "debug", "RUN", code, nil, ...)
+            if ok == false then
+                error(output)
+            end
+            return output
+        end
+
         skynet.dispatch("lua", function(_, source, cmd, ...)
             local f = debugagent[cmd]
             if f then
@@ -61,7 +76,8 @@ local function clustermng_service()
         end)
     end
 
-    local debugagent_name = config.get_tbl("app_debugagent_name") or "debugagent"
+
+    local debugagent_name = config.get("app_debugagent_name", "debugagent")
     -- 给节点远程开启 debugagent 服务
     local function load_debugagent(t, key)
         if key == "address" then
@@ -83,16 +99,22 @@ local function clustermng_service()
     function clustermng.reload(cluster_config)
         cluster.reload(cluster_config)
 
+        -- 清理旧节点
+        for nodename,_ in pairs(nodes) do
+            clusterservice.close(nodename, debugagent_name)
+            nodes[nodename] = nil
+            log.info("reload close old node. nodename:", nodename)
+        end
+
+        -- 创建新节点
         for nodename,_ in pairs(cluster_config) do
             if nodename:sub(1,2) ~= "__" then
                 local node = {
                     nodename = nodename,
+                    st = "UNCONNECT", -- 未连接
                 }
-
-                if nodes[nodename] then
-                    clusterservice.close(nodename, debugagent_name)
-                end
                 nodes[nodename] = setmetatable(node , mt)
+                log.info("reload open new node. nodename:", nodename)
             end
         end
         log.info("clustermng reload ok.")
@@ -104,18 +126,26 @@ local function clustermng_service()
         end
         is_init = true
         clustermng.reload(cluster_config)
+        clustermng.heartbeat()
         log.info("clustermng init ok.")
     end
 
     function clustermng.status(nodenames)
+        if not nodenames then
+            nodenames = utils.keys(nodes)
+        end
         local rets = {}
         for _, nodename in pairs(nodenames) do
-            --rets[nodename] = {
-            --    st = 0, -- 未连接，连接成功，连接失败
-            --    stat = {
-            --        [addr] = xxx,
-            --    }
-            --}
+            if nodes[nodename] then
+                rets[nodename] = {
+                    st = nodes[nodename].st,
+                    sttime = nodes[nodename].sttime,
+                }
+            else
+                rets[nodename] = {
+                    st = "UNKNOW", -- 未配置
+                }
+            end
         end
         return rets
     end
@@ -145,10 +175,34 @@ local function clustermng_service()
         end
     end)
 
-    local app_cluster_port = config.get_tbl("app_cluster_port")
+    local app_cluster_port = config.get("app_cluster_port")
     cluster.open(app_cluster_port)
 
-    -- TODO: 5 分钟心跳
+    -- 5 分钟心跳
+    local HEARTBEAT_TIME = 1*60*100 -- 5 min
+    function clustermng.heartbeat()
+        local function ping()
+            local reqs = skynet.request()
+
+            for nodename, node in pairs(nodes) do
+                reqs:add { node.address, "lua", "ping", nodename = nodename }
+            end
+
+            for req, resp in reqs:select(20) do
+                local nodename = req.nodename
+                log.info("nodename:", nodename, ", RESP:", resp[1])
+                if nodes[nodename] then
+                    nodes[nodename].st = "CONNECTED" -- 已连接
+                    nodes[nodename].sttime = utils.now()
+                else
+                    log.warn("uknow node in heartbeat. nodename:", nodename)
+                end
+            end
+            log.info("ping ok")
+            skynet.timeout(HEARTBEAT_TIME, ping)
+        end
+        ping()
+    end
 end
 
 local function load_service(t, key)
@@ -164,18 +218,27 @@ local clustermng = setmetatable ({} , {
     __index = load_service,
 })
 
+-- 查看节点详情
 function clustermng.status(nodenames)
     return skynet.call(clustermng.address, "lua", "status", nodenames)
 end
 
+-- 对节点执行指令
 function clustermng.run(nodename, command, ...)
     return skynet.call(clustermng.address, "lua", "run", nodename, command, ...)
 end
 
+-- 对节点注入代码
+function clustermng.inject(nodename, code, ...)
+    return skynet.call(clustermng.address, "lua", "run", nodename, "inject", code, ...)
+end
+
+-- 重新加载节点配置
 function clustermng.reload(cluster_config)
     skynet.call(clustermng.address, "lua", "reload", cluster_config)
 end
 
+-- 节点初始化
 function clustermng.init(cluster_config)
     skynet.call(clustermng.address, "lua", "init", cluster_config)
 end

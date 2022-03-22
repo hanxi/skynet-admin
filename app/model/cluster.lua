@@ -19,6 +19,20 @@ function M.get_nodes()
     return nodes
 end
 
+function M.get_nodes_status()
+    local nodes = M.get_nodes()
+    local node2status = clustermng.status()
+    for _, node in pairs(nodes) do
+        local nodename = node.name
+        local status = node2status[nodename]
+        if status then
+            node.st = status.st
+            node.sttime = status.sttime
+        end
+    end
+    return nodes
+end
+
 function M.add_node(name, addr)
     local dbtbl_cluster = db.get_dbtbl_cluster()
     local now = utils.now()

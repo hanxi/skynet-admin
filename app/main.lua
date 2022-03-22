@@ -10,9 +10,14 @@ app:use(token_middleware())
 -- filter: add response header
 app:use(function(c)
     c:set_res_header('X-Powered-By', 'wlua framework')
-    c:set_res_header('Access-Control-Allow-Origin', '*')
+    c:set_res_header('Access-Control-Allow-Origin', 'http://home.hanxi.cc:2789')
     c:set_res_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-    c:set_res_header('Access-Control-Allow-Headers', 'DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization')
+    c:set_res_header('Access-Control-Allow-Headers', 'Content-Type,x-token')
+    c:set_res_header('Access-Control-Allow-Credentials', 'true')
+    if c.req.method == "OPTIONS" then
+        c:send("", 204)
+        return
+    end
     c:next()
 end)
 

@@ -4,7 +4,7 @@ local model_cluster = require "app.model.cluster"
 
 -- 查看所有节点数据
 router:get("/list", function(c)
-    local nodes = model_cluster.get_nodes()
+    local nodes = model_cluster.get_nodes_status()
     c:send_json({
         code = "OK",
         data = {
