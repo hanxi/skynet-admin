@@ -16,6 +16,6 @@ COPY . /skynet-admin
 WORKDIR /skynet-admin
 RUN sh install.sh
 
-ENTRYPOINT ["sh entrypoint.sh"]
+ENTRYPOINT ["sh", "entrypoint.sh"]
 
 EXPOSE 2788
