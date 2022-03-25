@@ -7,7 +7,7 @@ LABEL description="This is Docker Image for skynet-admin"
 RUN apt update
 
 RUN DEBIAN_FRONTEND="noninteractive" apt install -y git libssl-dev check libpcre3 libpcre3-dev build-essential libtool \
-    automake autoconf pkg-config && \
+    automake autoconf pkg-config mongodb && \
     rm -rf /var/lib/apt/lists/* && \
     apt clean
 
