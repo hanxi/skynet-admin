@@ -21,6 +21,10 @@ docker run -p 2788:2788 -d hanxi/skynet-admin
 - 无需修改原有 skyent 节点代码，采用远程注入的方式操控节点
 - 方便自定义其他功能，比如向节点远程执行代码
 
+## 后台接口文档
+
+<http://home.hanxi.cc:2009/web/#/6/24>
+
 ## 截图
 
 增加节点
