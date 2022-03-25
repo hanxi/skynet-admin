@@ -11,9 +11,27 @@ docker run -p 2788:2788 -d hanxi/skynet-admin
 
 浏览器进入： <http://localhost:2788>
 
-## 增加节点
+默认用户： `admin`
+默认密码： `admin`
 
-## 查看节点列表
+## 功能
 
-## 查看节点详情
+- 查看节点状态信息
+- 基于 [wlua](https://github.com/hanxi/wlua) , 使用 cluster 协议管理节点
+- 无需修改原有 skyent 节点代码，采用远程注入的方式操控节点
+- 方便自定义其他功能，比如向节点远程执行代码
+
+## 截图
+
+增加节点
+
+![](img/addnode.png)
+
+查看节点列表
+
+![](img/nodelist.png)
+
+查看节点详情
+
+![](img/nodedetail.png)
 
