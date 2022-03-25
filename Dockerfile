@@ -11,11 +11,11 @@ RUN DEBIAN_FRONTEND="noninteractive" apt install -y git libssl-dev check libpcre
     rm -rf /var/lib/apt/lists/* && \
     apt clean
 
-COPY install.sh /install.sh
-RUN sh /install.sh
+# copy skynet-admin
+COPY . /skynet-admin
+WORKDIR /skynet-admin
+RUN sh install.sh
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["sh entrypoint.sh"]
 
 EXPOSE 2788

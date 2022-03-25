@@ -21,3 +21,6 @@ stop:
 
 reload:
 	wlua reload
+
+pack:
+	sh pack.sh
