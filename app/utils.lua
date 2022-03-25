@@ -45,4 +45,14 @@ function M.keys(tbl)
     return arr
 end
 
+function M.values(tbl)
+    local arr = {}
+    local i = 0
+    for _,v in pairs(tbl) do
+        i = i + 1
+        arr[i] = v
+    end
+    return arr
+end
+
 return M

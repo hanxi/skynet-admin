@@ -78,9 +78,10 @@ function M.del_node(name)
 end
 
 function M.get_node_detail(name)
-    local data = clustermng.run(name, "list")
-    log.debug("get_node_detail. name:", name, ",data:", data)
-    if data then
+    local rets = clustermng.run(name, "detail")
+    log.debug("get_node_detail. name:", name, ",rets:", rets)
+    if rets then
+        local data = utils.values(rets)
         return "OK", data
     end
     return "CLUSTER_ERROR", "cluster call failed"

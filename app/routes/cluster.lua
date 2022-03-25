@@ -45,6 +45,21 @@ router:post("/del", function(c)
     })
 end)
 
+-- 获取所有节点名字
+router:get("/nodenames", function(c)
+    local nodes = model_cluster.get_nodes()
+    local nodenames = {}
+    for i, node in pairs(nodes) do
+        nodenames[i] = node.name
+    end
+    c:send_json({
+        code = "OK",
+        data = {
+            nodenames = nodenames,
+        },
+    })
+end)
+
 -- 查看节点详情
 router:get("/detail/{name}", function(c)
     local name = c.params.name

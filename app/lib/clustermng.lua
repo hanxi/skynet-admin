@@ -42,19 +42,24 @@ local function clustermng_service()
             return "pong"
         end
 
-        function debugagent.stat(ti)
-            log.debug("in stat")
-            local ret = skynet.call(".launcher", "lua", "STAT", timeout(ti))
-            log.debug("out stat. ret:", ret)
-            return ret
-        end
-
-        function debugagent.mem(ti)
-            return skynet.call(".launcher", "lua", "MEM", timeout(ti))
-        end
-
-        function debugagent.list()
-            return skynet.call(".launcher", "lua", "LIST")
+        function debugagent.detail(ti)
+            local rets = {}
+            local stat = skynet.call(".launcher", "lua", "STAT", timeout(ti))
+            for addr, info in pairs(stat) do
+                info.addr = addr
+                rets[addr] = info
+            end
+            local mem = skynet.call(".launcher", "lua", "MEM", timeout(ti))
+            for addr, info in pairs(mem) do
+                if not stat[addr] then
+                    stat[addr] = {
+                        addr = addr
+                    }
+                end
+                stat[addr].mem = info:gsub("%(.*%)", "")
+                stat[addr].service = info:gsub(".*%((.*)%)", "%1")
+            end
+            return rets
         end
 
         function debugagent.inject(code, ...)
