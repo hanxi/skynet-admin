@@ -2,19 +2,9 @@ local cluster = require "skynet.cluster"
 
 local service = {}
 local caches = {}
-local providers = {}
-
-local function uniqueservice(nodename, ...)
-    return cluster.call(nodename, ".service", "LAUNCH",  ...)
-end
 
 local function get_provider(nodename)
-    local provider = providers[nodename]
-    if not provider then
-        provider = uniqueservice(nodename, "service_provider")
-        providers[nodename] = provider
-    end
-    return provider
+    return cluster.call(nodename, ".service", "LAUNCH", "service_provider")
 end
 
 local function check(func)
@@ -46,7 +36,8 @@ function service.new(nodename, name, mainfunc, ...)
 end
 
 function service.close(nodename, name)
-    local addr = cluster.call(nodename, get_provider(nodename), "close", name)
+    local p = get_provider(nodename)
+    local addr = cluster.call(nodename, p, "close", name)
     if addr then
         if caches[nodename] then
             caches[nodename][name] = nil
