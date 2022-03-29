@@ -12,10 +12,10 @@ local function clustermng_service()
     local clustermng = {}
     local nodes = {}
     local is_init = false
+    local cluster_config
 
     local function debugagent_service()
         local skynet = require "skynet"
-        local log = require "log"
 
         local debugagent = {}
 
@@ -76,7 +76,7 @@ local function clustermng_service()
             if f then
                 skynet.ret(skynet.pack(f(...)))
             else
-                log.error(string.format("Unknown cmd:%s, source:%s", cmd, source))
+                skynet.error(string.format("debugagent unknown cmd:%s, source:%s", cmd, source))
             end
         end)
     end
@@ -91,7 +91,7 @@ local function clustermng_service()
                 t.address = r
                 return t.address
             else
-                log.error("load_debugagent failed. err:", r)
+                log.error("load_debugagent failed. err:", r, ", nodename:", t.nodename)
             end
         else
             return nil
@@ -101,7 +101,8 @@ local function clustermng_service()
     local mt = {
         __index = load_debugagent,
     }
-    function clustermng.reload(cluster_config)
+    function clustermng.reload(cc)
+        cluster_config = cc
         cluster.reload(cluster_config)
 
         -- 清理旧节点
@@ -119,13 +120,14 @@ local function clustermng_service()
                     st = "UNCONNECT", -- 未连接
                 }
                 nodes[nodename] = setmetatable(node , mt)
-                log.info("reload open new node. nodename:", nodename)
+                log.info("reload open new node. nodename:", nodename, ",address:", node.address)
             end
         end
         log.info("clustermng reload ok.")
     end
 
-    function clustermng.init(cluster_config)
+    function clustermng.init(cc)
+        cluster_config = cc
         if is_init then
             return
         end
@@ -184,26 +186,33 @@ local function clustermng_service()
     cluster.open(app_cluster_port)
 
     -- 5 分钟心跳
-    local HEARTBEAT_TIME = 1*60*100 -- 5 min
+    local HEARTBEAT_TIME = 5*60*100 -- 5 min
     function clustermng.heartbeat()
         local function ping()
-            local reqs = skynet.request()
-
+            local need_reload = false
             for nodename, node in pairs(nodes) do
-                reqs:add { node.address, "lua", "ping", nodename = nodename }
-            end
-
-            for req, resp in reqs:select(20) do
-                local nodename = req.nodename
-                log.info("nodename:", nodename, ", RESP:", resp[1])
-                if nodes[nodename] then
-                    nodes[nodename].st = "CONNECTED" -- 已连接
-                    nodes[nodename].sttime = utils.now()
+                local resp = cluster_safe_call(nodename, node.address, "ping")
+                if resp then
+                    node.st = "CONNECTED" -- 已连接
+                    node.sttime = utils.now()
+                    log.info("ping ok. nodename:", nodename, ", address:", node.address, ", resp:", resp)
                 else
-                    log.warn("uknow node in heartbeat. nodename:", nodename)
+                    log.warn("ping failed. nodename:", nodename, ", address:", node.address)
+                    need_reload = true
                 end
             end
-            log.info("ping ok")
+
+            if need_reload then
+                log.warn("ping failed need_reload.")
+                if cluster_config then
+                    local ok, r = pcall(clustermng.reload, cluster_config)
+                    if not ok then
+                        log.error("reload failed. err:", r)
+                    end
+                end
+            else
+                log.info("ping all ok")
+            end
             skynet.timeout(HEARTBEAT_TIME, ping)
         end
         ping()
