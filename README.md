@@ -18,7 +18,7 @@ docker run -p 2788:2788 -d hanxi/skynet-admin
 
 - 查看节点状态信息
 - 基于 [wlua](https://github.com/hanxi/wlua) , 使用 cluster 协议管理节点
-- 无需修改原有 skyent 节点代码，采用远程注入的方式操控节点
+- 无需修改原有 skyent 节点代码，采用远程注入的方式操控节点（依赖 service/service_provider.lua 的 close 接口，需要最新的 skynet 版本）
 - 方便自定义其他功能，比如向节点远程执行代码
 
 ## 后台接口文档
