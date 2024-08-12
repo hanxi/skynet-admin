@@ -61,7 +61,7 @@ router:get("/nodenames", function(c)
 end)
 
 -- 查看节点详情
-router:get("/detail/{name}", function(c)
+router:get("/detail/:name", function(c)
     local name = c.params.name
     local code, data = model_cluster.get_node_detail(name)
     c:send_json({
